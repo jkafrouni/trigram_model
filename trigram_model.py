@@ -188,20 +188,22 @@ def essay_scoring_experiment(training_file1, training_file2, testdir1, testdir2)
         correct = 0       
  
         for f in os.listdir(testdir1):
-            pp = model1.perplexity(corpus_reader(os.path.join(testdir1, f), model1.lexicon))
-            # .. 
-    
+            pp1 = model1.perplexity(corpus_reader(os.path.join(testdir1, f), model1.lexicon))
+            pp2 = model2.perplexity(corpus_reader(os.path.join(testdir1, f), model2.lexicon))
+            total += 1
+            correct += (pp1 < pp2)
+
         for f in os.listdir(testdir2):
-            pp = model2.perplexity(corpus_reader(os.path.join(testdir2, f), model2.lexicon))
-            # .. 
+            pp2 = model2.perplexity(corpus_reader(os.path.join(testdir2, f), model2.lexicon))
+            pp1 = model1.perplexity(corpus_reader(os.path.join(testdir2, f), model1.lexicon))
+            total += 1
+            correct += (pp2 < pp1)
         
-        return 0.0
+        return correct / total
 
 if __name__ == "__main__":
 
-    model = TrigramModel(sys.argv[1])
-    corpus = corpus_reader(sys.argv[1], model.lexicon) # Warning
-    print(model.perplexity(corpus))
+    # model = TrigramModel(sys.argv[1])
 
     # put test code here...
     # or run the script from the command line with 
@@ -211,13 +213,19 @@ if __name__ == "__main__":
     # you can then call methods on the model instance in the interactive 
     # Python prompt. 
 
-    # Testing perplexity: 
-    dev_corpus = corpus_reader(sys.argv[2], model.lexicon)
-    pp = model.perplexity(dev_corpus)
-    print(pp)
+    # Testing perplexity:
+    # corpus = corpus_reader(sys.argv[1], model.lexicon) # Warning
+    # print(model.perplexity(corpus))
+
+    # dev_corpus = corpus_reader(sys.argv[2], model.lexicon)
+    # pp = model.perplexity(dev_corpus)
+    # print(pp)
 
 
     # Essay scoring experiment: 
-    # acc = essay_scoring_experiment('train_high.txt', 'train_low.txt", "test_high", "test_low")
-    # print(acc)
+    acc = essay_scoring_experiment("hw1_data/ets_toefl_data/train_high.txt", 
+                                   "hw1_data/ets_toefl_data/train_low.txt", 
+                                   "hw1_data/ets_toefl_data/test_high", 
+                                   "hw1_data/ets_toefl_data/test_low")
+    print(acc)
 
