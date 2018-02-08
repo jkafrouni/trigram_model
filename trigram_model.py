@@ -4,6 +4,8 @@ import math
 import random
 import os
 import os.path
+
+import numpy as np
 """
 COMS W4705 - Natural Language Processing - Spring 2018
 Homework 1 - Programming Component: Trigram Language Models
@@ -137,16 +139,32 @@ class TrigramModel(object):
         Generate a random sentence from the trigram model. t specifies the
         max length, but the sentence may be shorter if STOP is reached.
         """
-        return result            
+        current_trigram = (None, 'START', 'START')
+        sentence = list()
+        i = 0
+
+        while current_trigram[2] != 'STOP' and i < t:
+            word_1 = current_trigram[1]
+            word_2 = current_trigram[2]
+            # find all trigrams that start with word_1, word_2
+            candidates = [trigram for trigram in self.trigramcounts.keys() if trigram[:2] == (word_1, word_2)]
+            probabilities = [self.raw_trigram_probability(trigram) for trigram in candidates]
+
+            generated_word = np.random.choice([candidate[2] for candidate in candidates], 1, p=probabilities)[0]
+            current_trigram = (word_1, word_2, generated_word)
+            sentence.append(generated_word)
+            i += 1
+
+        return sentence            
 
     def smoothed_trigram_probability(self, trigram):
         """
         COMPLETE THIS METHOD (PART 4)
         Returns the smoothed trigram probability (using linear interpolation). 
         """
-        lambda1 = 1/3.0
-        lambda2 = 1/3.0
-        lambda3 = 1/3.0
+        lambda1 = 3/5.0
+        lambda2 = 1/5.0
+        lambda3 = 1/5.0
         
         smoothed = 0.0
         smoothed += lambda1 * self.raw_trigram_probability(trigram)
@@ -223,9 +241,11 @@ if __name__ == "__main__":
 
 
     # Essay scoring experiment: 
-    acc = essay_scoring_experiment("hw1_data/ets_toefl_data/train_high.txt", 
-                                   "hw1_data/ets_toefl_data/train_low.txt", 
-                                   "hw1_data/ets_toefl_data/test_high", 
-                                   "hw1_data/ets_toefl_data/test_low")
-    print(acc)
+    # acc = essay_scoring_experiment("data/ets_toefl_data/train_high.txt", 
+    #                                "data/ets_toefl_data/train_low.txt", 
+    #                                "data/ets_toefl_data/test_high", 
+    #                                "data/ets_toefl_data/test_low")
+    # print(acc)
 
+    model = TrigramModel(sys.argv[1])
+    print(model.generate_sentence())
