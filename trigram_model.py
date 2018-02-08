@@ -148,13 +148,6 @@ class TrigramModel(object):
         Returns the log probability of an entire sequence.
         """
         trigrams = get_ngrams(sentence, 3)
-        if any([any([trigram[i] not in self.lexicon for i in range(3)]) for trigram in trigrams]):
-            print('houston we got a problem')
-        trigrams = [(trigram[0] if trigram[0] in self.lexicon else 'UNK',
-                     trigram[1] if trigram[1] in self.lexicon else 'UNK',
-                     trigram[2] if trigram[2] in self.lexicon else 'UNK')
-                     for trigram in trigrams
-                    ]
         
         trigram_probs = [self.smoothed_trigram_probability(trigram) for trigram in trigrams]
         return sum(math.log2(prob) for prob in trigram_probs)
@@ -189,8 +182,10 @@ def essay_scoring_experiment(training_file1, training_file2, testdir1, testdir2)
 
 if __name__ == "__main__":
 
-    model = TrigramModel(sys.argv[1]) 
-
+    model = TrigramModel(sys.argv[1])
+    # corpus = corpus_reader(sys.argv[1], model.lexicon) # Warning
+    # print(model.perplexity(corpus))
+    
     # put test code here...
     # or run the script from the command line with 
     # $ python -i trigram_model.py [corpus_file]
@@ -200,9 +195,9 @@ if __name__ == "__main__":
     # Python prompt. 
 
     # Testing perplexity: 
-    # dev_corpus = corpus_reader(sys.argv[2], model.lexicon)
-    # pp = model.perplexity(dev_corpus)
-    # print(pp)
+    dev_corpus = corpus_reader(sys.argv[2], model.lexicon)
+    pp = model.perplexity(dev_corpus)
+    print(pp)
 
 
     # Essay scoring experiment: 
