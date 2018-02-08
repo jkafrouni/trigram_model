@@ -148,7 +148,8 @@ class TrigramModel(object):
         Returns the log probability of an entire sequence.
         """
         trigrams = get_ngrams(sentence, 3)
-
+        if any([any([trigram[i] not in self.lexicon for i in range(3)]) for trigram in trigrams]):
+            print('houston we got a problem')
         trigrams = [(trigram[0] if trigram[0] in self.lexicon else 'UNK',
                      trigram[1] if trigram[1] in self.lexicon else 'UNK',
                      trigram[2] if trigram[2] in self.lexicon else 'UNK')
@@ -199,9 +200,9 @@ if __name__ == "__main__":
     # Python prompt. 
 
     # Testing perplexity: 
-    dev_corpus = corpus_reader(sys.argv[2], model.lexicon)
-    pp = model.perplexity(dev_corpus)
-    print(pp)
+    # dev_corpus = corpus_reader(sys.argv[2], model.lexicon)
+    # pp = model.perplexity(dev_corpus)
+    # print(pp)
 
 
     # Essay scoring experiment: 
