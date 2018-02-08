@@ -18,6 +18,10 @@ We first train a trigram model on a training dataset of low scores, and a second
 
 To predict the score of an unknown essay, we compute its complexity with respect to each model. Perplexity being a metric that describes how well words of a corpus are predicted by an n-gram model, and for which lowest complexity is better, we assign the essay to the class which model returns the lowest complexity.
 
+## Sentence generation
+
+The TrigralModel class also contains a method "generate_sentence" that allows to randomly generate a sentence (of a given maximal size) using the trigram probabilities learned on the training corpus.
+
 ### Data
 
 The dataset used for this project being proprietary, it has not been added to this repo.
