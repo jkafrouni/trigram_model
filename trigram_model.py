@@ -170,8 +170,12 @@ class TrigramModel(object):
         COMPLETE THIS METHOD (PART 6) 
         Returns the log probability of an entire sequence.
         """
-        l = sum(self.sentence_logprob(sentence) for sentence in corpus)
-        l *= (1/self.n_words) # self.n_words already exists at this point
+        l = 0
+        M = 0
+        for sentence in corpus:
+            l += self.sentence_logprob(sentence)
+            M += len(sentence)
+        l /= M
         return 2**(-l)
 
 
