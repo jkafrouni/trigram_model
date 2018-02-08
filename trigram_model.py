@@ -23,7 +23,7 @@ def corpus_reader(corpusfile, lexicon=None):
 def get_lexicon(corpus):
     word_counts = defaultdict(int)
     for sentence in corpus:
-        for word in sentence: 
+        for word in sentence:
             word_counts[word] += 1
     return set(word for word in word_counts if word_counts[word] > 1)  
 
@@ -35,9 +35,13 @@ def get_ngrams(sequence, n):
     Given a sequence, this function should return a list of n-grams, where each n-gram is a Python tuple.
     This should work for arbitrary values of 1 <= n < len(sequence).
     """
-
-    return []
-
+    pad_start = ['START'] * (n-1) if n > 2 else ['START']
+    pad_stop = ['STOP']
+    sequence = pad_start + sequence + pad_stop
+    ngrams = []
+    for i in range(len(sequence) - n + 1):
+        ngrams.append(tuple(sequence[i:i+n]))
+    return ngrams
 
 class TrigramModel(object):
     
@@ -62,11 +66,27 @@ class TrigramModel(object):
         and trigram counts. 
         """
    
-        self.unigramcounts = {} # might want to use defaultdict or Counter instead
-        self.bigramcounts = {} 
-        self.trigramcounts = {} 
+        self.unigramcounts = defaultdict(int)
+        self.bigramcounts = defaultdict(int)
+        self.trigramcounts = defaultdict(int)
 
-        ##Your code here
+        for sentence in corpus:
+            unigrams = get_ngrams(sentence, 1)
+            bigrams = get_ngrams(sentence, 2)
+            trigrams = get_ngrams(sentence, 3)
+
+            for unigram in unigrams:
+                self.unigramcounts[unigram] += 1
+
+            for bigram in bigrams:
+                self.bigramcounts[bigram] += 1
+
+            for trigram in trigrams:
+                self.trigramcounts[trigram] += 1
+
+                if trigram[:2] == ('START', 'START'):
+                    # to compute trigram probs of type ('START', 'START', 'xxx')
+                    self.bigramcounts[('START', 'START')] += 1
 
         return
 
@@ -75,25 +95,29 @@ class TrigramModel(object):
         COMPLETE THIS METHOD (PART 3)
         Returns the raw (unsmoothed) trigram probability
         """
-        return 0.0
+        return self.trigramcounts[trigram]/self.bigramcounts[trigram[:2]]
 
     def raw_bigram_probability(self, bigram):
         """
         COMPLETE THIS METHOD (PART 3)
         Returns the raw (unsmoothed) bigram probability
         """
-        return 0.0
+        return self.bigramcounts[bigram]/self.unigramcounts[bigram[:1]]
     
     def raw_unigram_probability(self, unigram):
         """
         COMPLETE THIS METHOD (PART 3)
         Returns the raw (unsmoothed) unigram probability.
         """
-
+        if not hasattr(self, 'n_words'):
+            # if we haven't computed the denominator yet, do it now
+            self.n_words = sum(self.unigramcounts.values())
+            self.n_words -= - self.unigramcounts[('START',)] + self.unigramcounts[('STOP',)]
         #hint: recomputing the denominator every time the method is called
         # can be slow! You might want to compute the total number of words once, 
         # store in the TrigramModel instance, and then re-use it.  
-        return 0.0
+        
+        return self.unigramcounts[unigram]/self.n_words
 
     def generate_sentence(self,t=20): 
         """
@@ -111,21 +135,37 @@ class TrigramModel(object):
         lambda1 = 1/3.0
         lambda2 = 1/3.0
         lambda3 = 1/3.0
-        return 0.0
+        
+        smoothed = 0.0
+        smoothed += lambda1 * self.raw_trigram_probability(trigram)
+        smoothed += lambda2 * self.raw_bigram_probability(trigram[1:])
+        smoothed += lambda3 * self.raw_unigram_probability(trigram[2])
+        return smoothed
         
     def sentence_logprob(self, sentence):
         """
         COMPLETE THIS METHOD (PART 5)
         Returns the log probability of an entire sequence.
         """
-        return float("-inf")
+        trigrams = get_ngrams(sentence, 3)
+
+        trigrams = [(trigram[0] if trigram[0] in self.lexicon else 'UNK',
+                     trigram[1] if trigram[1] in self.lexicon else 'UNK',
+                     trigram[2] if trigram[2] in self.lexicon else 'UNK')
+                     for trigram in trigrams
+                    ]
+        
+        trigram_probs = [self.smoothed_trigram_probability(trigram) for trigram in trigrams]
+        return sum(math.log2(prob) for prob in trigram_probs)
 
     def perplexity(self, corpus):
         """
         COMPLETE THIS METHOD (PART 6) 
         Returns the log probability of an entire sequence.
         """
-        return float("inf") 
+        l = sum(self.sentence_logprob(sentence) for sentence in corpus)
+        l *= (1/self.n_words) # self.n_words already exists at this point
+        return 2**(-l)
 
 
 def essay_scoring_experiment(training_file1, training_file2, testdir1, testdir2):
@@ -158,11 +198,10 @@ if __name__ == "__main__":
     # you can then call methods on the model instance in the interactive 
     # Python prompt. 
 
-    
     # Testing perplexity: 
-    # dev_corpus = corpus_reader(sys.argv[2], model.lexicon)
-    # pp = model.perplexity(dev_corpus)
-    # print(pp)
+    dev_corpus = corpus_reader(sys.argv[2], model.lexicon)
+    pp = model.perplexity(dev_corpus)
+    print(pp)
 
 
     # Essay scoring experiment: 
