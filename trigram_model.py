@@ -95,14 +95,26 @@ class TrigramModel(object):
         COMPLETE THIS METHOD (PART 3)
         Returns the raw (unsmoothed) trigram probability
         """
-        return self.trigramcounts[trigram]/self.bigramcounts[trigram[:2]]
+        if self.bigramcounts[trigram[:2]] != 0 :
+            # warning: do not test as ```trigram[:2] in self.bigramcounts```
+            # because evaluating d[x] on a defaultdict d that doesn't contain x
+            # adds x to d (sets x: 0) and that might happen elswhere in the code
+            return self.trigramcounts[trigram]/self.bigramcounts[trigram[:2]]
+        else:
+            # case trigram with first two words not seen as bigram during training
+            return 0.0
 
     def raw_bigram_probability(self, bigram):
         """
         COMPLETE THIS METHOD (PART 3)
         Returns the raw (unsmoothed) bigram probability
         """
-        return self.bigramcounts[bigram]/self.unigramcounts[bigram[:1]]
+        if self.unigramcounts[bigram[:1]] != 0:
+            # same as for raw_trigram_probability
+            return self.bigramcounts[bigram]/self.unigramcounts[bigram[:1]]
+        else:
+            # case bigram with 1st word not seen during training
+            return 0.0
     
     def raw_unigram_probability(self, unigram):
         """
@@ -139,7 +151,8 @@ class TrigramModel(object):
         smoothed = 0.0
         smoothed += lambda1 * self.raw_trigram_probability(trigram)
         smoothed += lambda2 * self.raw_bigram_probability(trigram[1:])
-        smoothed += lambda3 * self.raw_unigram_probability(trigram[2])
+        smoothed += lambda3 * self.raw_unigram_probability(trigram[2:])
+
         return smoothed
         
     def sentence_logprob(self, sentence):
@@ -183,9 +196,9 @@ def essay_scoring_experiment(training_file1, training_file2, testdir1, testdir2)
 if __name__ == "__main__":
 
     model = TrigramModel(sys.argv[1])
-    # corpus = corpus_reader(sys.argv[1], model.lexicon) # Warning
-    # print(model.perplexity(corpus))
-    
+    corpus = corpus_reader(sys.argv[1], model.lexicon) # Warning
+    print(model.perplexity(corpus))
+
     # put test code here...
     # or run the script from the command line with 
     # $ python -i trigram_model.py [corpus_file]
